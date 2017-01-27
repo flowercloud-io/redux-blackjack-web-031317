@@ -1,22 +1,34 @@
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 import React, { Component } from 'react';
-import {connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
-import * as gameActions from './actions/gameActions';
-import Game from './Game'
+import { resetGame, startGame, hitAI, hitUser, setWinner } from './actions/gameActions'
+
+import Game from './game';
 
 class App extends Component {
-  constructor(props) {
+  constructor(props){
     super(props);
-    this.playRound = this.playRound.bind(this)
-    this.reset = this.reset.bind(this)
+    
+    this.newGame = this.newGame.bind(this);
+    this.calculateScore = this.calculateScore.bind(this);
+    this.aiTurn = this.aiTurn.bind(this);
   }
-
-  playRound(){
-    this.props.actions.executeRound()
+  
+  calculateScore(hand){
+    return hand.reduce((sum, card) => sum + card.value, 0)
   }
-
-  reset() {
-    this.props.actions.resetGame()
+  
+  aiTurn(){
+    this.props.actions.hitAI(
+      this.props.game.deck,
+      this.props.game.aiCards,
+      this.calculateScore(this.props.game.userCards)
+    );
+  }
+  
+  newGame(){
+    this.props.actions.resetGame();
+    this.props.actions.startGame(this.props.game.deck);
   }
 
   render() {
@@ -26,26 +38,32 @@ class App extends Component {
           <h2>Welcome to The Flatiron Casino</h2>
         </div>
         <Game 
-          winner={this.props.game.winner} 
-          userCards={this.props.game.userCards} 
-          aiCards={this.props.game.aiCards} 
-          triggerExecuteRound={this.playRound} 
-          triggerResetGame={this.reset} />
+          deck = {this.props.game.deck}
+          winner = {this.props.game.winner}
+          userCards = {this.props.game.userCards}
+          aiCards = {this.props.game.aiCards}
+          newGame = {this.newGame}
+          hitUser = {this.props.actions.hitUser}
+          calculateScore = {this.calculateScore}
+          aiTurn = {this.aiTurn}
+        />
       </div>
     );
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state){
   return {game: state.game}
 }
 
-function mapDispatchToProps(dispatch) {
-  return {actions: bindActionCreators(gameActions, dispatch)}
+function mapDispatchToProps(dispatch){
+  return {actions: bindActionCreators({ resetGame, startGame, hitAI, hitUser, setWinner }, dispatch)};
 }
 
-const connector = connect(mapStateToProps, mapDispatchToProps)
+const connector = connect(
+  mapStateToProps,
+  mapDispatchToProps
+);
 const connectedComponent = connector(App)
 
 export default connectedComponent;
-
